@@ -1002,7 +1002,6 @@ contract Treasury is ContractGuard {
     }
 
     function _sendToBoardroom(uint256 _amount) internal {
-        IRoseToken(rose).mint(address(this), _amount);
 
         uint256 _daoFundSharedAmount = 0;
         if (daoFundSharedPercent > 0) {
@@ -1020,8 +1019,6 @@ contract Treasury is ContractGuard {
 
         _amount = _amount.sub(_daoFundSharedAmount).sub(_devFundSharedAmount);
 
-        IERC20(rose).safeApprove(boardroom, 0);
-        IERC20(rose).safeApprove(boardroom, _amount);
         IBoardroom(boardroom).allocateSeigniorage(_amount);
         emit BoardroomFunded(now, _amount);
     }

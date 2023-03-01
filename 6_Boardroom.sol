@@ -616,6 +616,16 @@ contract ShareWrapper {
     }
 }
 
+interface IRoseToken {
+    function mint(address to, uint256 amount) external;
+    function totalSupply() external view returns (uint256);
+    function transferUnderlying(address to, uint256 value) external returns (bool);
+    function fragmentToRose(uint256 value) external view returns (uint256);
+    function roseToFragment(uint256 rose) external view returns (uint256);
+    function balanceOfUnderlying(address who) external view returns (uint256);
+    function burn(uint256 amount) external;
+}
+
 contract Boardroom is ShareWrapper, ContractGuard {
     using SafeERC20 for IERC20;
     using Address for address;
@@ -795,7 +805,7 @@ contract Boardroom is ShareWrapper, ContractGuard {
             require(members[msg.sender].epochTimerStart.add(rewardLockupEpochs) <= treasury.epoch(), "Boardroom: still in reward lockup");
             members[msg.sender].epochTimerStart = treasury.epoch(); // reset timer
             members[msg.sender].rewardEarned = 0;
-            rose.safeTransfer(msg.sender, reward);
+            IRoseToken(address(rose)).mint(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
     }
