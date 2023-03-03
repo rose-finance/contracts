@@ -1006,14 +1006,14 @@ contract Treasury is ContractGuard {
         uint256 _daoFundSharedAmount = 0;
         if (daoFundSharedPercent > 0) {
             _daoFundSharedAmount = _amount.mul(daoFundSharedPercent).div(10000);
-            IERC20(rose).transfer(daoFund, _daoFundSharedAmount);
+            IRoseToken(rose).mint(daoFund, _daoFundSharedAmount);
             emit DaoFundFunded(now, _daoFundSharedAmount);
         }
 
         uint256 _devFundSharedAmount = 0;
         if (devFundSharedPercent > 0) {
             _devFundSharedAmount = _amount.mul(devFundSharedPercent).div(10000);
-            IERC20(rose).transfer(devFund, _devFundSharedAmount);
+            IRoseToken(rose).mint(devFund, _devFundSharedAmount);
             emit DevFundFunded(now, _devFundSharedAmount);
         }
 

@@ -820,8 +820,6 @@ contract Boardroom is ShareWrapper, ContractGuard {
 
         BoardroomSnapshot memory newSnapshot = BoardroomSnapshot({time: block.number, rewardReceived: amount, rewardPerShare: nextRPS});
         boardroomHistory.push(newSnapshot);
-
-        rose.safeTransferFrom(msg.sender, address(this), amount);
         emit RewardAdded(msg.sender, amount);
     }
 

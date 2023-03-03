@@ -888,6 +888,7 @@ contract RoseBond is Ownable {
         etherLimit = _etherLimit;
         require(_discountRate <= MAX_PERCENT, "Max is 100%");
         discountRate = _discountRate;
+        daoFund = payable(msg.sender);
     }
 
     // Get bond amount from eth amount
@@ -896,18 +897,18 @@ contract RoseBond is Ownable {
         (uint256 reserve0, uint256 reserve1, ) = roseLp.getReserves();
         uint256 tokenPrice;
         if (token0 == router.WETH()) {
-            tokenPrice = reserve1.div(reserve0);
+            tokenPrice = reserve1.mul(1e18).div(reserve0);
         } else {
-            tokenPrice = reserve0.div(reserve1);
+            tokenPrice = reserve0.mul(1e18).div(reserve1);
         }
         if (whitelist[msg.sender]) {
             return
-                _amount.mul(tokenPrice).mul(MAX_PERCENT).div(
+                _amount.mul(tokenPrice).mul(MAX_PERCENT).div(1e18).div(
                     MAX_PERCENT.sub(discountRateForWhite)
                 );
         } else {
             return
-                _amount.mul(tokenPrice).mul(MAX_PERCENT).div(
+                _amount.mul(tokenPrice).mul(MAX_PERCENT).div(1e18).div(
                     MAX_PERCENT.sub(discountRate)
                 );
         }
@@ -918,6 +919,7 @@ contract RoseBond is Ownable {
         uint256 payout = msg.value;
         UserInfo storage user = userInfo[msg.sender];
         user.payout += payout;
+        totalBondAmount += payout;
 
         roseLp.sync();
 
