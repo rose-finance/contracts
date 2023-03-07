@@ -697,6 +697,14 @@ interface IUinswapRouter {
     address to,
     uint256 deadline
   ) external payable returns (uint256[] memory amounts);
+
+  function swapExactTokensForETH(
+    uint256 amountIn,
+    uint256 amountOutMin,
+    address[] calldata path,
+    address to,
+    uint256 deadline
+  ) external returns (uint256[] memory amounts);
 }
 
 interface IUniswapPair {
@@ -727,7 +735,7 @@ contract RoseBond is Ownable {
   using SafeERC20 for IRoseToken;
   using SafeERC20 for IERC20;
 
-  uint256 public paymentLimit = 100 ether;
+  uint256 public paymentLimit = 1e11;
 
   uint256 public vestingTime = 5 days; // timestamp
 
@@ -735,6 +743,7 @@ contract RoseBond is Ownable {
 
   IRoseToken public rose;
   IUniswapPair public roseLp;
+  IERC20 public USDC;
   // WETH-USDC LP
   IUniswapPair public nativeLp;
   IUinswapRouter public router;
@@ -757,7 +766,7 @@ contract RoseBond is Ownable {
 
   address payable public daoFund;
 
-  bool isBondable = false;
+  bool public isBondable = false;
 
   constructor(
     IRoseToken _rose,
@@ -775,10 +784,17 @@ contract RoseBond is Ownable {
     require(address(_router) != address(0));
     router = _router;
     paymentLimit = _paymentLimit;
-    discountRate[0] = 15; // For normal users
-    discountRate[1] = 25; // For white lists
-    discountRate[2] = 35; // For top referrals
+    discountRate[0] = 150; // For normal users
+    discountRate[1] = 250; // For white lists
+    discountRate[2] = 350; // For top referrers
     daoFund = payable(msg.sender);
+
+    address token0 = nativeLp.token0();
+    if (token0 == router.WETH()) {
+      USDC = IERC20(nativeLp.token1());
+    } else {
+      USDC = IERC20(token0);
+    }
   }
 
   function getTokenPrice() private view returns (uint256) {
@@ -786,9 +802,9 @@ contract RoseBond is Ownable {
     (uint256 reserve0, uint256 reserve1, ) = nativeLp.getReserves();
     uint256 tokenPrice;
     if (token0 == router.WETH()) {
-      tokenPrice = reserve0.mul(1e6).div(reserve1);
+      tokenPrice = reserve0.mul(1e18).div(reserve1);
     } else {
-      tokenPrice = reserve1.mul(1e30).div(reserve0);
+      tokenPrice = reserve1.mul(1e18).div(reserve0);
     }
     return tokenPrice;
   }
@@ -805,16 +821,15 @@ contract RoseBond is Ownable {
     }
     uint256 ethRate = getTokenPrice();
     tokenPrice = tokenPrice.mul(ethRate).div(1e18);
-    return
-      _amount.mul(tokenPrice).mul(MAX_PERCENT).div(1e18).div(
-        MAX_PERCENT.sub(discountRate[whitelist[msg.sender]])
-      );
+    return _amount.mul(tokenPrice).mul(MAX_PERCENT).div(1e18).div(MAX_PERCENT.sub(discountRate[whitelist[msg.sender]]));
   }
 
-  function bond() public payable {
+  function bond(uint256 _amount) public payable {
     require(isBondable, 'Bond is not available');
     require(totalBondAmount <= paymentLimit, 'Bond is finished!');
-    uint256 payout = msg.value;
+    redeem();
+    uint256 payout = _amount;
+    USDC.transferFrom(msg.sender, address(this), _amount);
     UserInfo storage user = userInfo[msg.sender];
     user.payout += payout;
     totalBondAmount += payout;
@@ -835,7 +850,15 @@ contract RoseBond is Ownable {
     UserInfo storage user = userInfo[_who];
     uint256 endTime = user.depositTime.add(vestingTime);
     uint256 debtPerTime = user.currentDebt.div(endTime.sub(user.lastRedeemTime));
-    uint256 redeemAmount = debtPerTime.mul(block.timestamp.sub(user.lastRedeemTime));
+    if (user.currentDebt == 0) {
+      return 0;
+    }
+    uint256 redeemAmount;
+    if (block.timestamp > endTime) {
+      redeemAmount = debtPerTime.mul(endTime.sub(user.lastRedeemTime));
+    } else {
+      redeemAmount = debtPerTime.mul(block.timestamp.sub(user.lastRedeemTime));
+    }
     return redeemAmount;
   }
 
@@ -843,6 +866,9 @@ contract RoseBond is Ownable {
   function redeem() public {
     UserInfo storage user = userInfo[msg.sender];
     uint256 redeemAmount = getRedeemAmount(msg.sender);
+    if (redeemAmount == 0) {
+      return;
+    }
     rose.mint(msg.sender, redeemAmount);
     user.currentDebt -= redeemAmount;
     user.lastRedeemTime = block.timestamp;
@@ -855,12 +881,22 @@ contract RoseBond is Ownable {
   function zap(uint256 _amount) public onlyOwner {
     roseLp.sync();
 
-    uint256 bal = address(this).balance;
+    uint256 bal = USDC.balanceOf(address(this));
     if (_amount > bal) {
       _amount = bal;
     }
 
-    _swapNativeToLP(bal, address(this));
+    if (USDC.allowance(address(this), address(router)) == 0) {
+      USDC.approve(address(router), type(uint256).max);
+    }
+    address[] memory path = new address[](2);
+    path[0] = address(USDC);
+    path[1] = router.WETH();
+    router.swapExactTokensForETH(_amount, 0, path, address(this), block.timestamp);
+
+    uint256 ethbal = address(this).balance;
+
+    _swapNativeToLP(ethbal, address(this));
 
     uint256 burnAmount = roseLp.balanceOf(address(this));
     roseLp.transfer(address(0), burnAmount);
@@ -921,12 +957,13 @@ contract RoseBond is Ownable {
   }
 
   // Get dao fund
-  function getDaoFund(uint256 _amount) public onlyOwner {
-    uint256 bal = address(this).balance;
+  function getDaoFund(address _token, uint256 _amount) public onlyOwner {
+    IERC20 token = IERC20(_token);
+    uint256 bal = token.balanceOf(address(this));
     if (_amount > bal) {
       _amount = bal;
     }
-    daoFund.transfer(_amount);
+    token.transfer(daoFund, _amount);
   }
 
   function setBondStart() public onlyOwner {

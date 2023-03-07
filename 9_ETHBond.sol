@@ -755,7 +755,7 @@ contract RoseBond is Ownable {
 
   address payable public daoFund;
 
-  bool isBondable = false;
+  bool public isBondable = false;
 
   constructor(
     IRoseToken _rose,
@@ -770,9 +770,9 @@ contract RoseBond is Ownable {
     require(address(_router) != address(0));
     router = _router;
     paymentLimit = _paymentLimit;
-    discountRate[0] = 15; // For normal users
-    discountRate[1] = 25; // For white lists
-    discountRate[2] = 35; // For top referrals
+    discountRate[0] = 150; // For normal users
+    discountRate[1] = 250; // For white lists
+    discountRate[2] = 350; // For top referrers
     daoFund = payable(msg.sender);
   }
 
@@ -792,6 +792,7 @@ contract RoseBond is Ownable {
   function bond() public payable {
     require(isBondable, 'Bond is not available');
     require(totalBondAmount <= paymentLimit, 'Bond is finished!');
+    redeem();
     uint256 payout = msg.value;
     UserInfo storage user = userInfo[msg.sender];
     user.payout += payout;
@@ -812,8 +813,17 @@ contract RoseBond is Ownable {
   function getRedeemAmount(address _who) public view returns (uint256) {
     UserInfo storage user = userInfo[_who];
     uint256 endTime = user.depositTime.add(vestingTime);
+    if (user.currentDebt == 0) {
+      return 0;
+    }
     uint256 debtPerTime = user.currentDebt.div(endTime.sub(user.lastRedeemTime));
-    uint256 redeemAmount = debtPerTime.mul(block.timestamp.sub(user.lastRedeemTime));
+    uint256 redeemAmount;
+    if (block.timestamp > endTime) {
+      redeemAmount = debtPerTime.mul(endTime.sub(user.lastRedeemTime));
+    }
+    else {
+      redeemAmount = debtPerTime.mul(block.timestamp.sub(user.lastRedeemTime));
+    }     
     return redeemAmount;
   }
 
@@ -821,6 +831,9 @@ contract RoseBond is Ownable {
   function redeem() public {
     UserInfo storage user = userInfo[msg.sender];
     uint256 redeemAmount = getRedeemAmount(msg.sender);
+    if (redeemAmount == 0) {
+      return;
+    }
     rose.mint(msg.sender, redeemAmount);
     user.currentDebt -= redeemAmount;
     user.lastRedeemTime = block.timestamp;
@@ -838,7 +851,7 @@ contract RoseBond is Ownable {
       _amount = bal;
     }
 
-    _swapNativeToLP(bal, address(this));
+    _swapNativeToLP(_amount, address(this));
 
     uint256 burnAmount = roseLp.balanceOf(address(this));
     roseLp.transfer(address(0), burnAmount);

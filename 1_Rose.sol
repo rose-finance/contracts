@@ -2977,7 +2977,7 @@ contract Rose is ERC20PresetMinterRebaser, Ownable, IROSES {
         _;
     }
 
-    constructor() ERC20PresetMinterRebaser("Rose", "ROSE") {
+    constructor() ERC20PresetMinterRebaser("Rose", "TROSE") {
         roseScalingFactor = BASE;
         initSupply = _fragmentToRose(INIT_SUPPLY);
         _totalSupply = INIT_SUPPLY;

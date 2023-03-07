@@ -758,7 +758,7 @@ contract RShare is ERC20Burnable, Operator {
 
     bool public rewardPoolDistributed = false;
 
-    constructor(uint256 _startTime, address _devFund) public ERC20("RShare", "RShare") {
+    constructor(uint256 _startTime, address _devFund) public ERC20("RShare", "TRShare") {
         _mint(msg.sender, 1 ether); // mint 1 ROSE Share for initial pools deployment
 
         startTime = _startTime;
