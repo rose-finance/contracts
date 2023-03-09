@@ -1677,8 +1677,7 @@ contract RShareRewardPool {
     }
 
     // Withdraw LP tokens.
-    function withdraw(uint256 _pid, uint256 _amount) public {
-        
+    function withdraw(uint256 _pid, uint256 _amount) public {        
         address _sender = msg.sender;
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_sender];
@@ -1692,8 +1691,7 @@ contract RShareRewardPool {
         uint256 _pending = user.amount.mul(pool.accRSharePerShare).div(1e18).sub(user.rewardDebt);
         if (_pending > 0) {
             safeRShareTransfer(_sender, _pending);
-            emit RewardPaid(_sender, _pending);
-            user.endLockTime = block.timestamp.add(pool.lockDuration);
+            emit RewardPaid(_sender, _pending);            
         }
         if (_amount > 0) {
             require(isWithdrawable(_pid), "Withdraw time is not reached!");
@@ -1703,6 +1701,9 @@ contract RShareRewardPool {
             }
             user.amount = user.amount.sub(_amount);           
         }
+        if (user.amount != 0) {
+            user.endLockTime = block.timestamp.add(pool.lockDuration);
+        }        
         user.rewardDebt = user.amount.mul(pool.accRSharePerShare).div(1e18);
         rebase();
         emit Withdraw(_sender, _pid, _amount);
