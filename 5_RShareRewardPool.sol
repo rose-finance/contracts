@@ -1757,17 +1757,4 @@ contract RShareRewardPool {
     function setOperator(address _operator) external onlyOperator {
         operator = _operator;
     }
-
-    function governanceRecoverUnsupported(IERC20 _token, uint256 amount, address to) external onlyOperator {
-        if (block.timestamp < poolEndTime + 90 days) {
-            // do not allow to drain core token (RSHARE or lps) if less than 90 days after pool ends
-            require(_token != rShare, "rShare");
-            uint256 length = poolInfo.length;
-            for (uint256 pid = 0; pid < length; ++pid) {
-                PoolInfo storage pool = poolInfo[pid];
-                require(_token != pool.token, "pool.token");
-            }
-        }
-        _token.safeTransfer(to, amount);
-    }
 }
