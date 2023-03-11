@@ -1483,9 +1483,9 @@ contract RShareRewardPool {
         operator = msg.sender;
         rose = _rose;
         roseLp = _roseLp;
-        lastRebaseTime = block.timestamp;
+        lastRebaseTime = _poolStartTime;
     }
-
+ 
     function pow(int128 x, uint256 n) public pure returns (int128 r) {
         r = ABDKMath64x64.fromUInt(1);
         while (n > 0) {
@@ -1719,7 +1719,7 @@ contract RShareRewardPool {
     }
 
     function rebase() internal {
-        if (lastRebaseTime != block.timestamp) {
+        if (lastRebaseTime != block.timestamp && block.timestamp > poolStartTime) {
             rose.rebase(
                 block.timestamp,
                 compound(1e18, compoundRatio, block.timestamp - lastRebaseTime) - 1e18,

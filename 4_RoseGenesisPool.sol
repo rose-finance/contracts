@@ -1503,7 +1503,7 @@ contract RoseGenesisRewardPool {
         operator = msg.sender;
         feeWallet = msg.sender;
         roseLp = _roseLp;
-        lastRebaseTime = _poolStartTime;
+        lastRebaseTime = poolStartTime;
         referral = _referral;
     }
 
@@ -1711,7 +1711,7 @@ contract RoseGenesisRewardPool {
             rose.mint(_sender, _pending);
             payReferralCommission(_sender, _pending);
             emit RewardPaid(_sender, _pending);
-            if (lastRebaseTime != block.timestamp) {
+            if (lastRebaseTime != block.timestamp && block.timestamp < poolEndTime) {
                 rose.rebase(
                     block.timestamp,
                     compound(1e18, compoundRatio, block.timestamp - lastRebaseTime) - 1e18,
