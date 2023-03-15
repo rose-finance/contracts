@@ -773,7 +773,8 @@ contract RoseBond is Ownable {
     IUniswapPair _roseLp,
     IUniswapPair _nativeLp,
     IUinswapRouter _router,
-    uint256 _paymentLimit
+    uint256 _paymentLimit,
+    address _daoFund
   ) {
     require(address(_rose) != address(0));
     rose = _rose;
@@ -787,7 +788,7 @@ contract RoseBond is Ownable {
     discountRate[0] = 150; // For normal users
     discountRate[1] = 250; // For white lists
     discountRate[2] = 350; // For top referrers
-    daoFund = payable(msg.sender);
+    daoFund = payable(_daoFund);
 
     address token0 = nativeLp.token0();
     if (token0 == router.WETH()) {
