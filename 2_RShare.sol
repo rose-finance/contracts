@@ -765,7 +765,6 @@ contract RShare is ERC20Burnable, Operator {
         endTime = startTime + VESTING_DURATION;
 
         devFundLastClaimed = startTime;
-
         devFundRewardRate = DEV_FUND_POOL_ALLOCATION.div(VESTING_DURATION);
 
         require(_devFund != address(0), "Address cannot be 0");

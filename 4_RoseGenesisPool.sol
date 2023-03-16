@@ -1480,7 +1480,6 @@ contract RoseGenesisRewardPool {
     uint256 public rosePerSecond = 0.11574074074 ether; // 20000 ROSE / (2day * 60min * 60s)
     uint256 public runningTime = 2 days; // 2 days
     uint256 public constant TOTAL_REWARDS = 20000 ether;
-
     address public feeWallet;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);

@@ -3288,7 +3288,6 @@ contract Rose is ERC20PresetMinterRebaser, Ownable, IROSES {
         bytes32 s
     ) public {
         require(block.timestamp <= deadline, "ROSE/permit-expired");
-
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",

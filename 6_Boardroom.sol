@@ -707,7 +707,6 @@ contract Boardroom is ShareWrapper, ContractGuard {
         rose = _rose;
         share = _share;
         treasury = _treasury;
-
         BoardroomSnapshot memory genesisSnapshot = BoardroomSnapshot({time: block.number, rewardReceived: 0, rewardPerShare: 0});
         boardroomHistory.push(genesisSnapshot);
 

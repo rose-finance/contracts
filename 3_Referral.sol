@@ -291,7 +291,6 @@ interface IReferral {
 }
 
 contract Referral is IReferral, Ownable {
-
     mapping(address => bool) public operators;
     mapping(address => address) public referrers; // user address => referrer address
     mapping(address => uint256) public referralsCount; // referrer address => referrals count

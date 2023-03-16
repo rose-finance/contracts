@@ -637,7 +637,6 @@ contract Locker is Ownable {
     function deposit(uint256 _amount) external {
         require(depositsEnabled, "deposits disabled");
         require(_amount > 0, "invalid amount");
-
         UserInfo storage user = userInfo[msg.sender];
         user.lockEndedTimestamp = block.timestamp + lockDuration;
         IERC20(address(rose)).safeTransferFrom(address(msg.sender), address(this), _amount);

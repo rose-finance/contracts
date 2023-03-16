@@ -729,7 +729,7 @@ contract RoseBond is Ownable {
 
   uint256 public paymentLimit = 100 ether;
 
-  uint256 public vestingTime = 5 days; // timestamp
+  uint256 public vestingTime = 5 days;
 
   uint256 public constant MAX_PERCENT = 1000;
 

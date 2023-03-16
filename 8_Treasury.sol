@@ -1002,7 +1002,6 @@ contract Treasury is ContractGuard {
     }
 
     function _sendToBoardroom(uint256 _amount) internal {
-
         uint256 _daoFundSharedAmount = 0;
         if (daoFundSharedPercent > 0) {
             _daoFundSharedAmount = _amount.mul(daoFundSharedPercent).div(10000);

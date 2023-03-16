@@ -1453,7 +1453,6 @@ contract RShareRewardPool {
 
     // Total allocation points. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
-
     // The time when RSHARE mining starts.
     uint256 public poolStartTime;
 
